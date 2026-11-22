@@ -1,5 +1,19 @@
 # tuishou-ting
 
+[![CI](https://github.com/ddproxy/tuishou-ting/actions/workflows/ci.yml/badge.svg)](https://github.com/ddproxy/tuishou-ting/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/ddproxy/tuishou-ting/actions/workflows/codeql.yml/badge.svg)](https://github.com/ddproxy/tuishou-ting/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ddproxy/tuishou-ting/badge)](https://securityscorecards.dev/viewer/?uri=github.com/ddproxy/tuishou-ting)
+[![Latest release](https://img.shields.io/github/v/release/ddproxy/tuishou-ting)](https://github.com/ddproxy/tuishou-ting/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Ting (the node agent), part of [Tuishou](https://github.com/ddproxy/tuishou).
 
-Status: placeholder. The code currently lives in the Lu repository (`ddproxy/lu`) and moves here when it has its own release cadence.
+Status: the code moves here from the Lu repository (`ddproxy/tuishou-lu`) when it has its own release cadence. This repository currently contains the library skeleton and the workflows that guard it.
+
+## Development
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo test --workspace --locked
+```
