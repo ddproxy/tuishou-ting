@@ -11,5 +11,6 @@ homepage = "https://github.com/ddproxy/tuishou"
 readme = "README.md"
 keywords = ["tuishou", "agents", "job-queue"]
 categories = ["development-tools"]
+exclude = [".github/**", "scripts/**", "deny.toml", "Makefile"]
 
 [dependencies]
