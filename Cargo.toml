@@ -4,9 +4,12 @@ version = "0.1.0"
 edition = "2024"
 # CI uses the stable toolchain; this is the stable release used for development.
 rust-version = "1.99.1"
-publish = false
 license = "MIT"
 description = "Ting, the Tuishou node agent (library skeleton while the code moves from Lu)"
 repository = "https://github.com/ddproxy/tuishou-ting"
+homepage = "https://github.com/ddproxy/tuishou"
+readme = "README.md"
+keywords = ["tuishou", "agents", "job-queue"]
+categories = ["development-tools"]
 
 [dependencies]
