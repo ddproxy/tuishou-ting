@@ -25,6 +25,10 @@ pub const DEFAULT_GRACE_PERIOD: Duration = Duration::from_secs(15 * 60);
 pub const MARKER_PREFIX: &str = "tuishou-ting:";
 /// Name of the node metric increased for each successful termination.
 pub const ORPHANS_REAPED_TOTAL: &str = "orphans_reaped_total";
+/// Name of the node metric for directories removed by the workspace collector.
+pub const GC_REMOVED_TOTAL: &str = "gc_removed_total";
+/// Name of the node metric for bytes freed by the workspace collector.
+pub const GC_BYTES_FREED_TOTAL: &str = "gc_bytes_freed_total";
 /// Name of the node metric for harness endpoint liveness.
 pub const HARNESS_OK: &str = "harness_ok";
 /// Name of the node metric for workspace free space as a percentage.
@@ -129,7 +133,7 @@ pub struct ConfigError {
 }
 
 impl ConfigError {
-    fn new(field: &'static str, reason: impl Into<String>) -> Self {
+    pub(crate) fn new(field: &'static str, reason: impl Into<String>) -> Self {
         Self {
             field,
             reason: reason.into(),
@@ -379,6 +383,8 @@ impl Logger for StderrLogger {
 #[derive(Debug, Default)]
 pub struct NodeMetrics {
     orphans_reaped_total: AtomicU64,
+    gc_removed_total: AtomicU64,
+    gc_bytes_freed_total: AtomicU64,
     harness_ok: AtomicI8,
     disk_free_pct: AtomicI8,
     disk_free_bytes: AtomicU64,
@@ -388,6 +394,16 @@ impl NodeMetrics {
     /// Returns the number of harnesses terminated as orphans.
     pub fn orphans_reaped_total(&self) -> u64 {
         self.orphans_reaped_total.load(Ordering::Relaxed)
+    }
+
+    /// Returns the number of directories removed by the workspace collector.
+    pub fn gc_removed_total(&self) -> u64 {
+        self.gc_removed_total.load(Ordering::Relaxed)
+    }
+
+    /// Returns the bytes in directories removed by the workspace collector.
+    pub fn gc_bytes_freed_total(&self) -> u64 {
+        self.gc_bytes_freed_total.load(Ordering::Relaxed)
     }
 
     /// Returns whether the harness endpoint answered the last probe.
@@ -445,6 +461,12 @@ impl NodeMetrics {
         self.orphans_reaped_total.fetch_add(1, Ordering::Relaxed);
     }
 
+    pub(crate) fn record_gc_removal(&self, bytes: u64) {
+        self.gc_removed_total.fetch_add(1, Ordering::Relaxed);
+        self.gc_bytes_freed_total
+            .fetch_add(bytes, Ordering::Relaxed);
+    }
+
     /// Renders the counters and known health gauges in Prometheus text format.
     pub fn render(&self) -> String {
         let mut text = format!(
@@ -454,6 +476,20 @@ impl NodeMetrics {
             self.orphans_reaped_total(),
             name = ORPHANS_REAPED_TOTAL,
         );
+        text.push_str(&format!(
+            "# HELP {name} Directories removed by the workspace garbage collector.\n\
+             # TYPE {name} counter\n\
+             {name} {}\n",
+            self.gc_removed_total(),
+            name = GC_REMOVED_TOTAL,
+        ));
+        text.push_str(&format!(
+            "# HELP {name} Bytes in directories removed by the workspace garbage collector.\n\
+             # TYPE {name} counter\n\
+             {name} {}\n",
+            self.gc_bytes_freed_total(),
+            name = GC_BYTES_FREED_TOTAL,
+        ));
         if let Some(ok) = self.harness_ok() {
             text.push_str(&format!(
                 "# HELP {name} Whether the harness endpoint answered the last probe.\n\
