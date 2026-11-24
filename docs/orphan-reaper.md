@@ -88,4 +88,4 @@ orphans_reaped_total 0
 The node metrics endpoint should serve this text alongside its other counters.
 The same renderer also exports the optional
 [heartbeat health gauges](heartbeat-health.md#metrics) when health samples are
-available.
+available, and the [workspace collector counters](workspace-gc.md#metrics).

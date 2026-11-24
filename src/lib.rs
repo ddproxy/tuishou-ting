@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+pub mod gc;
 pub mod health;
 pub mod orphan;
 

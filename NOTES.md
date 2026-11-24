@@ -57,6 +57,37 @@ Following the code, a self-contained `health` module was added:
   sample. The `Statvfs` and `HarnessProbe` traits keep the unit tests free of
   real filesystem state and live servers.
 
+### Workspace GC (this change)
+
+The brief describes a "config section", active job workspaces and an agent
+that owns per-job target directories. Verification against the tree found:
+
+- There is still no agent binary, config parser, job workspace registry or
+  metrics listener. Sources are `lib.rs`, `health.rs` and `orphan.rs` plus this
+  change; `GcConfig` is therefore the configuration section passed to the
+  collector by the agent, and `NodeMetrics::render()` remains the metrics text.
+- No code or document names the agent's per-job target directories. Following
+  the observed layout in the brief, the workspace defaults are `target-*`
+  (directly under the workspace root) and `*/target` (inside a per-job
+  workspace); tmp-root defaults are the two globs stated in the brief. All four
+  are replaceable through `GcConfig::with_patterns`.
+- File modification times are `SystemTime`, while the existing `Clock` trait
+  supplies `Instant`. A separate `MtimeClock` trait was added rather than
+  changing the heartbeat or orphan clock contracts.
+- `Statvfs`, `DiskStats::free_pct()`, `Sleeper`, `Logger` and `NodeMetrics` were
+  reused after verification; only the new counters were added to the renderer.
+- `SystemDirRemover` rechecks `symlink_metadata` and canonical containment in
+  the configured root before calling `std::fs::remove_dir_all`. That standard-library call was also checked on the
+  development toolchain with a temporary scratch tree: a symlink inside a
+  removed directory did not cause its target to be removed.
+
+Following the code, `src/gc.rs` is a self-contained module with injected
+filesystem lister, remover, active-workspace state, clock, sleeper and logger.
+The real adapters are deliberately narrow: listings and patterns resolve one
+path component at a time, symlinks are typed and refused, and roots are
+validated as absolute normalized paths. A listing error, unknown free space or
+unusable job state aborts the sweep before any removal.
+
 ## Repository state
 
 The `.git` directory is owned by a different account and is not readable by
@@ -65,6 +96,7 @@ commit could be created. The intended terse commit messages are:
 
     add orphan harness watcher
     add heartbeat health fields
+    add workspace garbage collector
 
 No hook, workflow or policy file was changed. The orphan watcher added no
 dependencies; this change adds `rustix` and its `Cargo.lock` entries, regenerated
