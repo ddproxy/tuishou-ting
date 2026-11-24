@@ -10,6 +10,8 @@ Ting (the node agent), part of [Tuishou](https://github.com/ddproxy/tuishou).
 
 Status: the code moves here from the Lu repository (`ddproxy/tuishou-lu`) when it has its own release cadence. This repository currently contains the library skeleton and the workflows that guard it.
 
+The library includes the [orphan harness watcher](docs/orphan-reaper.md): a configurable periodic sweep that terminates harnesses left behind by a previous agent run, with an exact owner-marker check and a fail-closed job-state check.
+
 ## Development
 
 ```sh

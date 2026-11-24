@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+pub mod orphan;
+
 /// Version of Ting, taken from the package version in `Cargo.toml`.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
