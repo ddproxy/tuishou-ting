@@ -14,7 +14,7 @@
 use std::collections::HashSet;
 use std::fmt;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI8, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 /// Default delay between sweeps (10 minutes).
@@ -25,9 +25,17 @@ pub const DEFAULT_GRACE_PERIOD: Duration = Duration::from_secs(15 * 60);
 pub const MARKER_PREFIX: &str = "tuishou-ting:";
 /// Name of the node metric increased for each successful termination.
 pub const ORPHANS_REAPED_TOTAL: &str = "orphans_reaped_total";
+/// Name of the node metric for harness endpoint liveness.
+pub const HARNESS_OK: &str = "harness_ok";
+/// Name of the node metric for workspace free space as a percentage.
+pub const DISK_FREE_PCT: &str = "disk_free_pct";
+/// Name of the node metric for workspace free space in bytes.
+pub const DISK_FREE_BYTES: &str = "disk_free_bytes";
 
 const MAX_ID_LEN: usize = 256;
 const MAX_AGENT_ID_LEN: usize = 128;
+const UNKNOWN_GAUGE: i8 = -1;
+const UNKNOWN_DISK_BYTES: u64 = u64::MAX;
 
 /// Settings for an orphan watcher.
 ///
@@ -367,10 +375,13 @@ impl Logger for StderrLogger {
     }
 }
 
-/// Counters exported for the node metrics endpoint.
+/// Counters and gauges exported for the node metrics endpoint.
 #[derive(Debug, Default)]
 pub struct NodeMetrics {
     orphans_reaped_total: AtomicU64,
+    harness_ok: AtomicI8,
+    disk_free_pct: AtomicI8,
+    disk_free_bytes: AtomicU64,
 }
 
 impl NodeMetrics {
@@ -379,19 +390,96 @@ impl NodeMetrics {
         self.orphans_reaped_total.load(Ordering::Relaxed)
     }
 
+    /// Returns whether the harness endpoint answered the last probe.
+    pub fn harness_ok(&self) -> Option<bool> {
+        match self.harness_ok.load(Ordering::Relaxed) {
+            1 => Some(true),
+            0 => Some(false),
+            _ => None,
+        }
+    }
+
+    /// Returns the last sampled workspace free-space percentage.
+    pub fn disk_free_pct(&self) -> Option<u8> {
+        match self.disk_free_pct.load(Ordering::Relaxed) {
+            UNKNOWN_GAUGE => None,
+            value => u8::try_from(value).ok(),
+        }
+    }
+
+    /// Returns the last sampled workspace free-space bytes.
+    pub fn disk_free_bytes(&self) -> Option<u64> {
+        match self.disk_free_bytes.load(Ordering::Relaxed) {
+            UNKNOWN_DISK_BYTES => None,
+            value => Some(value),
+        }
+    }
+
+    /// Records one heartbeat health sample.
+    ///
+    /// `None` clears the corresponding gauge so an unavailable signal is not
+    /// exported as a misleading zero.
+    pub fn record_health(
+        &self,
+        harness_ok: Option<bool>,
+        disk_free_pct: Option<u8>,
+        disk_free_bytes: Option<u64>,
+    ) {
+        let harness = match harness_ok {
+            Some(true) => 1,
+            Some(false) => 0,
+            None => UNKNOWN_GAUGE,
+        };
+        let pct = disk_free_pct
+            .and_then(|pct| i8::try_from(pct.min(100)).ok())
+            .unwrap_or(UNKNOWN_GAUGE);
+        self.harness_ok.store(harness, Ordering::Relaxed);
+        self.disk_free_pct.store(pct, Ordering::Relaxed);
+        self.disk_free_bytes.store(
+            disk_free_bytes.unwrap_or(UNKNOWN_DISK_BYTES),
+            Ordering::Relaxed,
+        );
+    }
+
     pub(crate) fn record_orphan_reaped(&self) {
         self.orphans_reaped_total.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Renders the counters in Prometheus text exposition format.
+    /// Renders the counters and known health gauges in Prometheus text format.
     pub fn render(&self) -> String {
-        format!(
+        let mut text = format!(
             "# HELP {name} Harnesses terminated by the orphan watcher.\n\
              # TYPE {name} counter\n\
              {name} {}\n",
             self.orphans_reaped_total(),
             name = ORPHANS_REAPED_TOTAL,
-        )
+        );
+        if let Some(ok) = self.harness_ok() {
+            text.push_str(&format!(
+                "# HELP {name} Whether the harness endpoint answered the last probe.\n\
+                 # TYPE {name} gauge\n\
+                 {name} {}\n",
+                u8::from(ok),
+                name = HARNESS_OK,
+            ));
+        }
+        if let Some(pct) = self.disk_free_pct() {
+            text.push_str(&format!(
+                "# HELP {name} Workspace filesystem space available to unprivileged users.\n\
+                 # TYPE {name} gauge\n\
+                 {name} {pct}\n",
+                name = DISK_FREE_PCT,
+            ));
+        }
+        if let Some(bytes) = self.disk_free_bytes() {
+            text.push_str(&format!(
+                "# HELP {name} Workspace filesystem bytes available to unprivileged users.\n\
+                 # TYPE {name} gauge\n\
+                 {name} {bytes}\n",
+                name = DISK_FREE_BYTES,
+            ));
+        }
+        text
     }
 }
 

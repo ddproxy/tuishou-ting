@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+pub mod health;
 pub mod orphan;
 
 /// Version of Ting, taken from the package version in `Cargo.toml`.
