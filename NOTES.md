@@ -2,6 +2,8 @@
 
 ## Code-versus-brief discrepancies
 
+### Orphan watcher (earlier change)
+
 The brief describes the watcher as a change to an existing node agent. This
 repository does not contain that agent; verification against the tree found:
 
@@ -25,13 +27,46 @@ skip. No such limitation is documented in this repository (README, CHANGELOG,
 SECURITY, workflows, scripts, deny policy or sources were checked). Nothing was
 skipped.
 
+### Heartbeat health (this change)
+
+The brief says to extend the heartbeat and points at `docs/compatibility.md`.
+Verification against the tree found:
+
+- No heartbeat type, heartbeat payload builder, controller wire schema, HTTP
+  server or local harness endpoint address exists in `src/` or `docs/`.
+- No workspace path configuration or filesystem-health code exists.
+- `docs/compatibility.md` is not mirrored here; the only local document before
+  this change was `docs/orphan-reaper.md`, and a filesystem search found no
+  compatibility document.
+
+Following the code, a self-contained `health` module was added:
+
+- `HeartbeatHealth::to_json()` is the additive payload fragment. No existing
+  heartbeat key is present to change, so the agent merges these keys into the
+  payload it already sends. Unknown fields are omitted, matching the rule that
+  older controllers ignore keys they do not recognise.
+- The agent supplies both external inputs the tree cannot provide: the harness
+  listener `SocketAddr` and the workspace path. The probe sends `GET /` and
+  treats any HTTP reply as an answer; that path is a documented choice, not a
+  value found in code.
+- `NodeMetrics::render()` already served as the metrics endpoint text, so the
+  three gauges were added there. No listener was introduced.
+- The crate forbids unsafe code and had no dependency exposing free-space
+  statistics. `rustix` (safe `statvfs` wrapper, `fs` and `std` features) was
+  added rather than libc FFI or spawning `df`; it costs one syscall per fresh
+  sample. The `Statvfs` and `HarnessProbe` traits keep the unit tests free of
+  real filesystem state and live servers.
+
 ## Repository state
 
 The `.git` directory is owned by a different account and is not readable by
 the session user, so git commands fail with "not a git repository" and no
-commit could be created. The intended terse commit message is:
+commit could be created. The intended terse commit messages are:
 
     add orphan harness watcher
+    add heartbeat health fields
 
-No hook, workflow or policy file was changed. No dependencies or lockfile
-entries were added, and no dead-code allowances or suppressions were used.
+No hook, workflow or policy file was changed. The orphan watcher added no
+dependencies; this change adds `rustix` and its `Cargo.lock` entries, regenerated
+by cargo. No dead-code allowances or suppressions were used, and no
+secret-shaped text was written.
