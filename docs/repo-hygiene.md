@@ -24,7 +24,6 @@ Current exceptions cover canonical public project, badge and registry URLs, the
 MIT copyright notice, and the neutral fixture names used by the collector
 tests. The canonical URLs keep their existing owner and host segments because
 they are public project addresses; the registry index is fixed by Cargo.
-`NOTES.md` records the values kept deliberately and why.
 
 To add an exception, justify it in a comment and add the narrowest possible
 `path:token` entry; do not allow a whole tool name. To remove an exception,
