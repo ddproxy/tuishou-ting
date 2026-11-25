@@ -25,8 +25,8 @@ wrong value. An entirely empty payload is `{}`.
 These keys are additive: no existing heartbeat key is renamed, retyped or
 removed. A controller that ignores unknown fields can keep operating with the
 old payload shape; a controller that understands the keys can avoid a sick
-node. `docs/compatibility.md` from the Lu repository is not mirrored in this
-repository, so no local compatibility rule was available to apply.
+node. No compatibility document is mirrored in this repository, so no local
+compatibility rule was available to apply.
 
 ## Sampling
 
