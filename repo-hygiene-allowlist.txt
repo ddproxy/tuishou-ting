@@ -1,0 +1,31 @@
+# Repository hygiene allowlist.
+# Format: <relative-path>:<token> # justification
+# Blank lines and lines starting with '#' are ignored.
+
+# Canonical public project addresses.
+Cargo.toml:github.com # repository and homepage host
+Cargo.toml:ddproxy/tuishou-ting # public repository slug
+Cargo.toml:ddproxy/tuishou # public homepage slug
+Cargo.lock:github.com # public registry host
+Cargo.lock:rust-lang/crates.io-index # public registry index
+README.md:github.com # public project and badge host
+README.md:api.securityscorecards.dev # public badge host
+README.md:securityscorecards.dev # public badge host
+README.md:img.shields.io # public badge host
+README.md:ddproxy/tuishou-ting # public project slug
+README.md:ddproxy/tuishou # public project slug
+SECURITY.md:github.com # public security reporting host
+SECURITY.md:ddproxy/tuishou-ting # public security reporting slug
+deny.toml:github.com # public registry host
+deny.toml:rust-lang/crates.io-index # public registry index
+
+# Legal attribution.
+LICENSE:Jon West (ddproxy) # MIT copyright notice
+
+# Neutral collector fixtures.
+src/gc.rs:app-target # neutral fixture name
+src/gc.rs:link-target # symlink fixture name
+
+# Entries that name themselves.
+repo-hygiene-allowlist.txt:app-target # this allowlist
+repo-hygiene-allowlist.txt:link-target # this allowlist

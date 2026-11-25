@@ -1550,9 +1550,9 @@ mod tests {
             .with_dir("/srv/work/work-a/target", vec![file("cache", 1024)])
             .with_dir(
                 "/srv/work/tmp",
-                vec![directory("reiki-target", old), symlink("link-target", old)],
+                vec![directory("app-target", old), symlink("link-target", old)],
             )
-            .with_dir("/srv/work/tmp/reiki-target", vec![file("big", 8192)]);
+            .with_dir("/srv/work/tmp/app-target", vec![file("big", 8192)]);
         let harness = setup(
             config(),
             lister,
@@ -1571,7 +1571,7 @@ mod tests {
             vec![
                 PathBuf::from("/srv/work/target-old"),
                 PathBuf::from("/srv/work/work-a/target"),
-                PathBuf::from("/srv/work/tmp/reiki-target"),
+                PathBuf::from("/srv/work/tmp/app-target"),
             ]
         );
         assert_eq!(
@@ -1586,7 +1586,7 @@ mod tests {
                     bytes: 1024
                 },
                 GcRemoval {
-                    path: PathBuf::from("/srv/work/tmp/reiki-target"),
+                    path: PathBuf::from("/srv/work/tmp/app-target"),
                     bytes: 8192
                 },
             ]
@@ -1988,7 +1988,7 @@ mod tests {
 
     #[test]
     fn wildcard_matching_is_component_local() {
-        assert!(match_segment("*-target", "reiki-target"));
+        assert!(match_segment("*-target", "app-target"));
         assert!(match_segment("target-*", "target-42"));
         assert!(match_segment("t?rget", "target"));
         assert!(!match_segment("*-target", "nested/target"));

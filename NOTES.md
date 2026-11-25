@@ -22,7 +22,7 @@ endpoint. `NodeMetrics::render()` provides the counter text but does not open a
 listener, because no HTTP server exists in this crate. `ActiveJobs` is provided
 for callers that keep job state in memory.
 
-The brief mentions a documented D1 mock limitation as the only accepted check
+The brief mentions a documented mock limitation as the only accepted check
 skip. No such limitation is documented in this repository (README, CHANGELOG,
 SECURITY, workflows, scripts, deny policy or sources were checked). Nothing was
 skipped.
@@ -35,7 +35,7 @@ Verification against the tree found:
 - No heartbeat type, heartbeat payload builder, controller wire schema, HTTP
   server or local harness endpoint address exists in `src/` or `docs/`.
 - No workspace path configuration or filesystem-health code exists.
-- `docs/compatibility.md` is not mirrored here; the only local document before
+- No compatibility document is mirrored here; the only local document before
   this change was `docs/orphan-reaper.md`, and a filesystem search found no
   compatibility document.
 
@@ -102,3 +102,36 @@ No hook, workflow or policy file was changed. The orphan watcher added no
 dependencies; this change adds `rustix` and its `Cargo.lock` entries, regenerated
 by cargo. No dead-code allowances or suppressions were used, and no
 secret-shaped text was written.
+
+### Public repository hygiene (this change)
+
+The brief asks for neutral names in checked-in files. Verification against the
+tree found:
+
+- The only tool-named fixture directory was a `target`-style test path in
+  `src/gc.rs`; it now uses a neutral application word. No stored path, wire key,
+  metric name or owner marker is derived from it.
+- References to the earlier source repository in `Cargo.toml`, `README.md`,
+  `docs/heartbeat-health.md` and this file were prose only. They now describe
+  the source neutrally; no code or configuration uses that repository name.
+- A short tool label in this file was prose only and is now generic.
+- No internal hostname, internal domain or email address exists in the tree.
+  Every URL found is a public project, badge or registry address.
+
+Kept deliberately, with the reason recorded in `repo-hygiene-allowlist.txt`:
+
+- Canonical public repository, homepage, badge, security-reporting and registry
+  URLs keep their existing host and owner segments. They are public project
+  addresses, and changing them would break links and registry resolution.
+- The `LICENSE` copyright notice keeps the rights holder's attribution. It is a
+  legal notice, not a stored or wire value.
+
+No wire key, metric name, marker prefix or stored path was renamed, so there is
+no legacy spelling on the wire to preserve. The hygiene test scans text files
+in a checkout (excluding generated directories) and reports unapproved target
+fixtures, repository slugs, hosts, email addresses, copyright holders and
+earlier-repository wording.
+
+The intended terse commit message for this change is:
+
+    keep repository names neutral
